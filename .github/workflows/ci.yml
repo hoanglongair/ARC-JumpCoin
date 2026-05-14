@@ -47,17 +47,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Create CI env file
-        shell: bash
-        run: |
-          cp .env.example .env
-          {
-            echo "DATABASE_URL=postgresql://ci:ci@localhost:5432/arc_jumpcoin"
-            echo "ARC_RPC_URL=http://127.0.0.1:8545"
-            echo "NEXT_PUBLIC_ARC_RPC_URL=http://127.0.0.1:8545"
-            echo "NEXT_PUBLIC_CHAIN_ID=31337"
-          } >> .env
-
       - name: Generate Prisma client
         run: pnpm db:generate
 
