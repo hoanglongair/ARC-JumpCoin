@@ -12,7 +12,7 @@
     "db:migrate": "pnpm --filter @arc-jumpcoin/web db:migrate",
     "contracts:compile": "pnpm --filter @arc-jumpcoin/contracts compile",
     "contracts:test": "pnpm --filter @arc-jumpcoin/contracts test",
-    "contracts:deploy": "pnpm --filter @arc-jumpcoin/contracts deploy"
+    "contracts:deploy": "pnpm --filter @arc-jumpcoin/contracts run deploy"
   },
   "devDependencies": {
     "typescript": "^5.7.3"
