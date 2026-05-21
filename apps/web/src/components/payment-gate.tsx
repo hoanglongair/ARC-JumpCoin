@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { formatUnits, parseAbi, type Address, type Hash } from "viem";
+import { formatUnits, type Address, type Hash } from "viem";
 import {
   useAccount,
   useChainId,
@@ -41,6 +41,8 @@ const defaultTokenSnapshot: TokenSnapshot = {
   symbol: "TOKEN"
 };
 
+const zeroAddress = "0x0000000000000000000000000000000000000000";
+
 export function PaymentGate() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -52,13 +54,21 @@ export function PaymentGate() {
   const [token, setToken] = useState<TokenSnapshot>(defaultTokenSnapshot);
   const [gateState, setGateState] = useState<GateState>("idle");
   const [error, setError] = useState<string>("");
+  const [hasInjectedWallet, setHasInjectedWallet] = useState(true);
 
   const isWrongNetwork = isConnected && chainId !== arcTestnet.id;
+  const hasInvalidTokenAddress = appConfig.tokenAddress.toLowerCase() === zeroAddress;
+  const hasInvalidPaymentAddress = appConfig.paymentContractAddress.toLowerCase() === zeroAddress;
+  const hasInvalidContractConfig = hasInvalidTokenAddress || hasInvalidPaymentAddress;
   const isBusy = ["loading", "approve-pending", "payment-pending", "verify-pending"].includes(gateState);
   const hasEnoughToken = token.balance >= appConfig.playFee;
   const hasAllowance = token.allowance >= appConfig.playFee;
 
   const connector = connectors[0];
+
+  useEffect(() => {
+    setHasInjectedWallet(typeof window !== "undefined" && "ethereum" in window);
+  }, []);
 
   const formattedBalance = useMemo(() => {
     return formatUnits(token.balance, token.decimals);
@@ -69,6 +79,12 @@ export function PaymentGate() {
   }, [token.decimals]);
 
   const refreshTokenState = useCallback(async () => {
+    if (hasInvalidContractConfig) {
+      setGateState("failed");
+      setError("Token or payment contract address is not configured. Check NEXT_PUBLIC_TOKEN_ADDRESS and NEXT_PUBLIC_PAYMENT_CONTRACT_ADDRESS, then rebuild the app.");
+      return;
+    }
+
     if (!address || !publicClient || isWrongNetwork) {
       return;
     }
@@ -108,7 +124,7 @@ export function PaymentGate() {
       setGateState("failed");
       setError(caught instanceof Error ? caught.message : "Failed to load token state.");
     }
-  }, [address, isWrongNetwork, publicClient]);
+  }, [address, hasInvalidContractConfig, isWrongNetwork, publicClient]);
 
   useEffect(() => {
     if (!isConnected) {
@@ -141,6 +157,12 @@ export function PaymentGate() {
   async function handlePlay() {
     if (!address || !walletClient || !publicClient) {
       setError("Connect a wallet before playing.");
+      return;
+    }
+
+    if (hasInvalidContractConfig) {
+      setGateState("failed");
+      setError("Token or payment contract address is not configured. Check NEXT_PUBLIC_TOKEN_ADDRESS and NEXT_PUBLIC_PAYMENT_CONTRACT_ADDRESS, then rebuild the app.");
       return;
     }
 
@@ -215,7 +237,7 @@ export function PaymentGate() {
             {!isConnected ? (
               <button
                 type="button"
-                disabled={!connector || isConnectPending}
+                disabled={!connector || !hasInjectedWallet || isConnectPending}
                 onClick={() => connector && connect({ connector })}
                 className="rounded-md bg-ink px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -225,7 +247,7 @@ export function PaymentGate() {
               <>
                 <button
                   type="button"
-                  disabled={isBusy || gateState === "insufficient-token"}
+                  disabled={hasInvalidContractConfig || isBusy || gateState === "insufficient-token"}
                   onClick={handlePlay}
                   className="rounded-md bg-mint px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -249,6 +271,33 @@ export function PaymentGate() {
               </>
             )}
           </div>
+
+          {!isConnected && !hasInjectedWallet ? (
+            <div className="mt-5 rounded-md border border-amber/30 bg-yellow-50 p-4 text-sm leading-6 text-amber">
+              <p className="font-semibold">No wallet extension detected.</p>
+              <p className="mt-1 text-black/70">
+                Install MetaMask or another injected EVM wallet, then refresh this page to connect.
+              </p>
+              <a
+                href="https://metamask.io/download/"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex rounded-md border border-amber/40 bg-white px-3 py-2 font-semibold text-amber hover:bg-yellow-100"
+              >
+                Install MetaMask
+              </a>
+            </div>
+          ) : null}
+
+          {hasInvalidContractConfig ? (
+            <div className="mt-5 rounded-md border border-danger/30 bg-red-50 p-4 text-sm leading-6 text-danger">
+              <p className="font-semibold">Contract configuration is missing.</p>
+              <p className="mt-1">
+                Set `NEXT_PUBLIC_TOKEN_ADDRESS` and `NEXT_PUBLIC_PAYMENT_CONTRACT_ADDRESS` to deployed contract
+                addresses, then restart local dev or redeploy Vercel.
+              </p>
+            </div>
+          ) : null}
 
           {error ? <p className="mt-5 rounded-md border border-danger/30 bg-red-50 p-3 text-sm text-danger">{error}</p> : null}
         </div>
