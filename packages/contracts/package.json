@@ -5,7 +5,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy": "hardhat run scripts/deploy-payment.ts --network arcTestnet"
+    "deploy": "hardhat run scripts/deploy-payment.ts --network arcTestnet",
+    "set-play-fee": "hardhat run scripts/set-play-fee.ts --network arcTestnet"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.2.0"

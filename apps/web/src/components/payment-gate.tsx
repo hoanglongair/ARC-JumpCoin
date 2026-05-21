@@ -55,14 +55,17 @@ export function PaymentGate() {
   const [gateState, setGateState] = useState<GateState>("idle");
   const [error, setError] = useState<string>("");
   const [hasInjectedWallet, setHasInjectedWallet] = useState(true);
+  const [contractPlayFee, setContractPlayFee] = useState<bigint | null>(null);
 
   const isWrongNetwork = isConnected && chainId !== arcTestnet.id;
   const hasInvalidTokenAddress = appConfig.tokenAddress.toLowerCase() === zeroAddress;
   const hasInvalidPaymentAddress = appConfig.paymentContractAddress.toLowerCase() === zeroAddress;
   const hasInvalidContractConfig = hasInvalidTokenAddress || hasInvalidPaymentAddress;
   const isBusy = ["loading", "approve-pending", "payment-pending", "verify-pending"].includes(gateState);
-  const hasEnoughToken = token.balance >= appConfig.playFee;
-  const hasAllowance = token.allowance >= appConfig.playFee;
+  const effectivePlayFee = contractPlayFee ?? appConfig.playFee;
+  const hasSuspiciousUsdcFee = token.decimals === 6 && effectivePlayFee >= 1_000_000_000_000n;
+  const hasEnoughToken = token.balance >= effectivePlayFee;
+  const hasAllowance = token.allowance >= effectivePlayFee;
 
   const connector = connectors[0];
 
@@ -75,8 +78,8 @@ export function PaymentGate() {
   }, [token.balance, token.decimals]);
 
   const formattedFee = useMemo(() => {
-    return formatUnits(appConfig.playFee, token.decimals);
-  }, [token.decimals]);
+    return formatUnits(effectivePlayFee, token.decimals);
+  }, [effectivePlayFee, token.decimals]);
 
   const refreshTokenState = useCallback(async () => {
     if (hasInvalidContractConfig) {
@@ -93,7 +96,7 @@ export function PaymentGate() {
     setError("");
 
     try {
-      const [balance, allowance, decimals, symbol] = await Promise.all([
+      const [balance, allowance, decimals, symbol, playFee] = await Promise.all([
         publicClient.readContract({
           address: appConfig.tokenAddress,
           abi: erc20Abi,
@@ -115,11 +118,17 @@ export function PaymentGate() {
           address: appConfig.tokenAddress,
           abi: erc20Abi,
           functionName: "symbol"
+        }),
+        publicClient.readContract({
+          address: appConfig.paymentContractAddress,
+          abi: paymentContractAbi,
+          functionName: "playFee"
         })
       ]);
 
       setToken({ balance, allowance, decimals, symbol });
-      setGateState(balance >= appConfig.playFee ? "idle" : "insufficient-token");
+      setContractPlayFee(playFee);
+      setGateState(balance >= playFee ? "idle" : "insufficient-token");
     } catch (caught) {
       setGateState("failed");
       setError(caught instanceof Error ? caught.message : "Failed to load token state.");
@@ -185,7 +194,7 @@ export function PaymentGate() {
           address: appConfig.tokenAddress,
           abi: erc20Abi,
           functionName: "approve",
-          args: [appConfig.paymentContractAddress, appConfig.playFee],
+          args: [appConfig.paymentContractAddress, effectivePlayFee],
           chain: arcTestnet,
           account: address
         });
@@ -286,6 +295,16 @@ export function PaymentGate() {
               >
                 Install MetaMask
               </a>
+            </div>
+          ) : null}
+
+          {hasSuspiciousUsdcFee ? (
+            <div className="mt-5 rounded-md border border-amber/30 bg-yellow-50 p-4 text-sm leading-6 text-amber">
+              <p className="font-semibold">Play fee looks too high for USDC.</p>
+              <p className="mt-1 text-black/70">
+                Arc USDC ERC-20 uses 6 decimals. Set the payment contract fee and `NEXT_PUBLIC_PLAY_FEE` to
+                `1000000` for a 1 USDC play fee.
+              </p>
             </div>
           ) : null}
 

@@ -12,7 +12,8 @@
     "db:migrate": "pnpm --filter @arc-jumpcoin/web db:migrate",
     "contracts:compile": "pnpm --filter @arc-jumpcoin/contracts compile",
     "contracts:test": "pnpm --filter @arc-jumpcoin/contracts test",
-    "contracts:deploy": "pnpm --filter @arc-jumpcoin/contracts run deploy"
+    "contracts:deploy": "pnpm --filter @arc-jumpcoin/contracts run deploy",
+    "contracts:set-play-fee": "pnpm --filter @arc-jumpcoin/contracts run set-play-fee"
   },
   "devDependencies": {
     "typescript": "^5.7.3"

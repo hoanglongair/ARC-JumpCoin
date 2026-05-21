@@ -7,6 +7,7 @@ config();
 
 const arcRpcUrl = process.env.ARC_RPC_URL ?? "";
 const privateKey = process.env.PRIVATE_KEY ?? "";
+const privateKeyPattern = /^0x[a-fA-F0-9]{64}$/;
 
 const hardhatConfig: HardhatUserConfig = {
   solidity: {
@@ -21,9 +22,7 @@ const hardhatConfig: HardhatUserConfig = {
   networks: {
     arcTestnet: {
       url: arcRpcUrl,
-      accounts: privateKey && !privateKey.endsWith("0000000000000000000000000000000000000000000000000000000000000000")
-        ? [privateKey]
-        : []
+      accounts: privateKeyPattern.test(privateKey) ? [privateKey] : []
     }
   }
 };

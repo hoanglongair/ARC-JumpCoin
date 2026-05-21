@@ -45,6 +45,13 @@ export const erc20Abi = [
 export const paymentContractAbi = [
   {
     type: "function",
+    name: "playFee",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
     name: "pay",
     stateMutability: "nonpayable",
     inputs: [],

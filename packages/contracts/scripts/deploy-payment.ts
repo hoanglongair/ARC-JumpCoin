@@ -14,6 +14,23 @@ async function main() {
   const playFee = requiredEnv("PLAY_FEE");
   const [deployer] = await ethers.getSigners();
 
+  if (!deployer) {
+    throw new Error(
+      "No deployer signer found. Check PRIVATE_KEY in root .env. It must be the deployer wallet private key in 0x + 64 hex characters format, and must not be the placeholder from .env.example."
+    );
+  }
+
+  const balance = await ethers.provider.getBalance(deployer.address);
+
+  console.log("Deployer:", deployer.address);
+  console.log("Deployer gas balance:", ethers.formatEther(balance), "USDC");
+
+  if (balance === 0n) {
+    throw new Error(
+      "Deployer wallet has 0 gas balance on Arc Testnet. Fund this address with Arc Testnet USDC from https://faucet.circle.com, then run deploy again."
+    );
+  }
+
   const PaymentContract = await ethers.getContractFactory("PaymentContract");
   const paymentContract = await PaymentContract.deploy(
     tokenAddress,
