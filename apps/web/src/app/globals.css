@@ -21,3 +21,40 @@ button,
 input {
   font: inherit;
 }
+
+.arcade-button {
+  border-radius: 14px 10px 16px 12px;
+  border: 2px solid rgba(18, 20, 23, 0.12);
+  background: linear-gradient(180deg, #2d7d66, #226a55);
+  color: white;
+  padding: 0.85rem 1.25rem;
+  font-weight: 900;
+  box-shadow:
+    0 8px 0 rgba(18, 20, 23, 0.18),
+    0 18px 32px rgba(45, 125, 102, 0.22);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease;
+}
+
+.arcade-button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow:
+    0 11px 0 rgba(18, 20, 23, 0.16),
+    0 0 34px rgba(45, 125, 102, 0.36);
+  filter: saturate(1.08);
+}
+
+.arcade-button:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    0 4px 0 rgba(18, 20, 23, 0.18),
+    0 10px 20px rgba(45, 125, 102, 0.18);
+}
+
+.arcade-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(0.4);
+}

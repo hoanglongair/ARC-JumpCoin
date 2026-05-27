@@ -3,8 +3,12 @@ import { getAddress, isHash, type Hash } from "viem";
 import { Prisma } from "@prisma/client";
 import { appConfig } from "@/lib/config";
 import { prisma } from "@/lib/prisma";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { createSessionToken, sessionExpiry, setSessionCookie } from "@/lib/session";
 import { verifyPaymentOnchain } from "@/lib/verify-payment";
+
+const verifyWindowMs = 60_000;
+const verifyLimit = 6;
 
 export async function POST(request: Request) {
   try {
@@ -19,6 +23,25 @@ export async function POST(request: Request) {
     }
 
     const walletAddress = getAddress(body.walletAddress);
+    const clientIp = getClientIp(request);
+    const limitResult = rateLimit(`verify:${clientIp}:${walletAddress.toLowerCase()}`, verifyLimit, verifyWindowMs);
+
+    if (!limitResult.allowed) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((limitResult.resetAt - Date.now()) / 1000));
+      return NextResponse.json(
+        { ok: false, error: "Too many verification attempts. Please wait and try again." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(retryAfterSeconds),
+            "X-RateLimit-Limit": String(verifyLimit),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(Math.ceil(limitResult.resetAt / 1000))
+          }
+        }
+      );
+    }
+
     const verified = await verifyPaymentOnchain(body.txHash as Hash, walletAddress);
     const sessionToken = createSessionToken();
     const expiresAt = sessionExpiry();
@@ -59,7 +82,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      sessionToken,
       sessionId: result.session.id
     });
   } catch (caught) {

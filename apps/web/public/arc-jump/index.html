@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="apple-touch-icon"
+            sizes="180x180"
+            href="./imgs/favicon_io/apple-touch-icon.png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="32x32"
+            href="./imgs/favicon_io/favicon-32x32.png"
+        />
+        <link
+            rel="icon"
+            type="image/png"
+            sizes="16x16"
+            href="./imgs/favicon_io/favicon-16x16.png"
+        />
+        <link rel="manifest" href="./imgs/favicon_io/site.webmanifest" />
+        <title>ARC JumpCoin</title>
+        <link rel="stylesheet" href="./style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <canvas id="canvas">
+                Aww, your browser doesn't support HTML5!
+            </canvas>
+
+            <div id="mainMenu">
+                <h1>ARC JumpCoin</h1>
+                <h3>
+                    by
+                    <a href="https://x.com/0xbescient" target="_blank"
+                        >0xbescient</a
+                    >
+                </h3>
+
+                <p class="info">
+                    use
+                    <span class="key left">left</span>
+                    <span class="key right">right</span>
+                    to move and space to (re) start...
+                </p>
+
+                <a class="button btn-play" href="javascript:requestPaidStart()"
+                    >Play</a
+                >
+            </div>
+
+            <div id="gameOverMenu">
+                <h1>game over!</h1>
+                <h3 id="go_score">you scored 0 points</h3>
+                <div class="gameover_box">
+                    <a class="button" href="#" id="homeBtn" style="bottom: 80px"
+                        >Home</a
+                    >
+                    <a
+                        id="tweetBtn"
+                        target="_blank"
+                        class="button tweet"
+                        href="#"
+                        >Tweet score</a
+                    >
+                </div>
+            </div>
+
+            <img id="sprite" src="./imgs/b6ySa2.png" />
+            <div id="mobileControls">
+                <button id="btnLeft">left</button>
+                <button id="btnRight">right</button>
+            </div>
+
+            <div id="scoreBoard">
+                <p id="score">0</p>
+            </div>
+        </div>
+
+        <script src="./app.js"></script>
+    </body>
+</html>

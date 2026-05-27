@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSessionCookie } from "@/lib/session";
+import { clearSessionCookie, getSessionCookie } from "@/lib/session";
 
 export async function GET() {
   const sessionToken = await getSessionCookie();
@@ -14,6 +14,7 @@ export async function GET() {
   });
 
   if (!session || session.status !== "ACTIVE" || session.expiresAt <= new Date()) {
+    await clearSessionCookie();
     return NextResponse.json({ authenticated: false });
   }
 

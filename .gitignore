@@ -1,4 +1,5 @@
 node_modules
+.pnpm-store
 .next
 out
 dist
@@ -14,6 +15,7 @@ coverage
 
 
 *.log
+SrcGame
 
 apps/web/prisma/dev.db
 packages/contracts/cache

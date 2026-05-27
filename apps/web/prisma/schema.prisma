@@ -21,10 +21,12 @@ enum GameSessionStatus {
 model User {
   id            String        @id @default(cuid())
   walletAddress String        @unique
+  displayName   String?
   createdAt     DateTime      @default(now())
   lastSeenAt     DateTime      @updatedAt
   payments       Payment[]
   sessions       GameSession[]
+  leaderboard    LeaderboardEntry[]
 }
 
 model Payment {
@@ -55,7 +57,23 @@ model GameSession {
   expiresAt     DateTime
   user          User              @relation(fields: [walletAddress], references: [walletAddress])
   payment       Payment           @relation(fields: [paymentId], references: [id])
+  leaderboard   LeaderboardEntry?
 
   @@index([walletAddress])
   @@index([expiresAt])
+}
+
+model LeaderboardEntry {
+  id            String      @id @default(cuid())
+  walletAddress String
+  displayName   String
+  score         Int
+  sessionId     String      @unique
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [walletAddress], references: [walletAddress])
+  session       GameSession @relation(fields: [sessionId], references: [id])
+
+  @@index([score])
+  @@index([walletAddress])
+  @@index([createdAt])
 }

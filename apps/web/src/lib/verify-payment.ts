@@ -18,9 +18,14 @@ export async function verifyPaymentOnchain(txHash: Hash, walletAddress: string):
     transport: http(appConfig.rpcUrl)
   });
 
-  const [transaction, receipt] = await Promise.all([
+  const [transaction, receipt, playFee] = await Promise.all([
     client.getTransaction({ hash: txHash }),
-    client.getTransactionReceipt({ hash: txHash })
+    client.getTransactionReceipt({ hash: txHash }),
+    client.readContract({
+      address: expectedContract,
+      abi: paymentContractAbi,
+      functionName: "playFee"
+    })
   ]);
 
   if (receipt.status !== "success") {
@@ -45,7 +50,7 @@ export async function verifyPaymentOnchain(txHash: Hash, walletAddress: string):
     return (
       getAddress(log.address) === expectedContract &&
       getAddress(log.args.payer) === expectedWallet &&
-      log.args.amount === appConfig.playFee
+      log.args.amount === playFee
     );
   });
 
